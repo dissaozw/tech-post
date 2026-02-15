@@ -1,0 +1,4 @@
+weasyprint
+pymupdf
+markdown
+Pygments
