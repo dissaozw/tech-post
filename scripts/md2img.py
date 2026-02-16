@@ -59,7 +59,7 @@ h3 {
 
 p {
     margin: 6px 0;
-    text-align: justify;
+    text-align: left;
 }
 
 ul, ol {
@@ -232,6 +232,7 @@ pre code {
     line-height: 1.7;
     color: #444;
     margin: 3px 0;
+    text-align: left !important;
 }
 
 /* Language label */
@@ -282,16 +283,44 @@ def md_to_html(md_text):
         filtered.append(line)
     md_text = "\n".join(filtered)
 
-    # Insert TLDR after the first h1 heading
+    # Extract TL;DR from markdown (## TL;DR section)
     import re as _re2
-    tldr_block = '''
+    tldr_match = _re2.search(r'##\s*TL;?DR\s*\n+(.*?)(?=\n##|\n---|\Z)', md_text, _re2.DOTALL | _re2.IGNORECASE)
+    if tldr_match:
+        tldr_text = tldr_match.group(1).strip()
+        # Remove markdown bold/italic/code formatting for clean display
+        tldr_text = _re2.sub(r'\*\*(.*?)\*\*', r'\1', tldr_text)
+        tldr_text = _re2.sub(r'\*(.*?)\*', r'\1', tldr_text)
+        tldr_text = _re2.sub(r'`(.*?)`', r'\1', tldr_text)
+        # Apply 盘古之白: add space between CJK and Latin/digits
+        tldr_text = _re2.sub(r'([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff])([A-Za-z0-9])', r'\1 \2', tldr_text)
+        tldr_text = _re2.sub(r'([A-Za-z0-9\.\)\]])([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff])', r'\1 \2', tldr_text)
+        tldr_block = f'''
 <div class="cover-tldr">
 <div class="cover-tldr-title">TL;DR</div>
-<p>OpenClaw的记忆系统基于纯Markdown文件，分为每日笔记和长期记忆两层架构。智能体每次会话加载上下文文件，通过压缩前刷新机制保证记忆不丢失。搜索层可选内置向量搜索或本地QMD。核心思路：文件即真相，确定性注入优于概率检索。</p>
+<p>{tldr_text}</p>
 </div>
 '''
+        # Remove TL;DR section from markdown body to avoid duplication
+        # Also consume trailing --- separator if present
+        md_text = _re2.sub(r'##\s*TL;?DR\s*\n+.*?(?:\n---\s*\n?)?(?=\n##|\Z)', '', md_text, count=1, flags=_re2.DOTALL | _re2.IGNORECASE)
+    else:
+        tldr_block = ''
+
     cover_html = ''
     toc_html = ''
+
+    # Apply 盘古之白 globally (outside code blocks)
+    _lines = md_text.split('\n')
+    _in_code = False
+    for i, _line in enumerate(_lines):
+        if _line.strip().startswith('```'):
+            _in_code = not _in_code
+            continue
+        if not _in_code:
+            _lines[i] = _re2.sub(r'([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff])([A-Za-z0-9])', r'\1 \2', _lines[i])
+            _lines[i] = _re2.sub(r'([A-Za-z0-9\.\)\]])([\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff])', r'\1 \2', _lines[i])
+    md_text = '\n'.join(_lines)
 
     # Add language labels before code blocks
     import re as _re

@@ -41,7 +41,11 @@ Edit CSS variables in `scripts/md2img.py`:
 
 ## TL;DR
 
-The TL;DR text is hardcoded in the script's `tldr_block` variable. Update it per post.
+Auto-extracted from the `## TL;DR` section in the markdown. No need to hardcode — just include a `## TL;DR` heading in your post and the script will extract the text, apply 盘古之白 spacing, and render it as the cover block after the title.
+
+## 盘古之白 (CJK-Latin Spacing)
+
+The script automatically adds spaces between CJK and Latin/digit characters (盘古之白) in both the TL;DR block and the body text. Code blocks are excluded. No manual spacing needed in the markdown source.
 
 ## Dependencies
 
